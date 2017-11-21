@@ -290,7 +290,7 @@ namespace QuantConnect.Lean.Engine
                         var banner = new Dictionary<string, string>();
                         var statisticsResults = new StatisticsResults();
 
-                        var csvTransactionsFileName = Config.Get("transaction-log");
+                        var csvTransactionsFileName = Config.TransactionsFile;
                         if (!string.IsNullOrEmpty(csvTransactionsFileName))
                         {
                             SaveListOfTrades(_algorithmHandlers.Transactions, csvTransactionsFileName);

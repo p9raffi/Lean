@@ -39,7 +39,7 @@ namespace QuantConnect
         /// </summary>
         public static void Reset ()
         {
-            DataFolder = Config.Get("data-folder", Config.Get("data-directory", @"../../../Data/"));
+            DataFolder = Config.DataPath;
 
             Version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             var versionid = Config.Get("version-id");

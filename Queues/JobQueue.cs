@@ -40,7 +40,7 @@ namespace QuantConnect.Queues
         private static readonly int UserId = Config.GetInt("job-user-id", 0);
         private static readonly int ProjectId = Config.GetInt("job-project-id", 0);
         private static readonly string AlgorithmTypeName = Config.Get("algorithm-type-name");
-        private static readonly string AlgorithmPathPython = Config.Get("algorithm-path-python", "../../../Algorithm.Python/");
+        private static readonly string AlgorithmPathPython = Config.Get("algorithm-location", "../../../Algorithm.Python/");
         private readonly Language Language = (Language)Enum.Parse(typeof(Language), Config.Get("algorithm-language"));
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace QuantConnect.Queues
             get
             {
                 // we expect this dll to be copied into the output directory
-                return Config.Get("algorithm-location", "QuantConnect.Algorithm.CSharp.dll"); 
+                return Config.AlgorithmFile;
             }
         }
 
@@ -151,7 +151,7 @@ namespace QuantConnect.Queues
         {
             if (Language == Language.Python)
             {
-                var pythonSource = AlgorithmTypeName + ".py";
+                var pythonSource = Config.AlgorithmFile;
                 if (!File.Exists(pythonSource))
                 {
                     // Copies file to execution location

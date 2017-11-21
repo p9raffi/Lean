@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using QuantConnect.Configuration;
 
 namespace QuantConnect.Lean.Engine.Results
 {
@@ -17,9 +18,9 @@ namespace QuantConnect.Lean.Engine.Results
         /// <returns>The path to the logs</returns>
         public virtual string SaveLogs(string id, IEnumerable<string> logs)
         {
-            var path = $"{id}-log.txt";
+            var path = string.IsNullOrEmpty(Config.LogFile) ? Path.Combine(Directory.GetCurrentDirectory(), $"{id}-log.txt") : Config.LogFile;
             File.WriteAllLines(path, logs);
-            return Path.Combine(Directory.GetCurrentDirectory(), path);
+            return path;
         }
 
         /// <summary>
@@ -29,7 +30,8 @@ namespace QuantConnect.Lean.Engine.Results
         /// <param name="result">The results to save</param>
         public virtual void SaveResults(string name, Result result)
         {
-            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), name), JsonConvert.SerializeObject(result));
+            var path = string.IsNullOrEmpty(Config.ResultsFile) ? Path.Combine(Directory.GetCurrentDirectory(), name) : Config.ResultsFile;
+            File.WriteAllText(path, JsonConvert.SerializeObject(result));
         }
     }
 }

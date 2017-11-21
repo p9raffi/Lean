@@ -34,7 +34,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Queues
         public ApiDataQueueHandler()
         {
             _api = new Api.Api();
-            _api.Initialize(Config.GetInt("job-user-id", 0), Config.Get("api-access-token", ""), Config.Get("data-folder"));
+            _api.Initialize(Config.GetInt("job-user-id", 0), Config.Get("api-access-token", ""), Config.DataPath);
         }
 
         /// <summary>

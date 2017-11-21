@@ -29,19 +29,73 @@ namespace QuantConnect.Configuration
     /// </summary>
     public static class Config
     {
-        //Location of the configuration file.
+        //Default location of the configuration file.
         private const string ConfigurationFileName = "config.json";
+
+        /// <summary>
+        /// Gets the default or user-defined configuration file if one is specified.
+        /// </summary>
+        private static string UserConfigurationFileName = "";
+
+        public static string ConfigurationFile
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(UserConfigurationFileName))
+                    return ConfigurationFileName;
+
+                return UserConfigurationFileName;
+            }
+            set { UserConfigurationFileName = value; }
+        }
+
+        private static string[] Arguments = Environment.GetCommandLineArgs();
+
+        static Config()
+        {
+            string usage = "Usage: QuantConnect.Lean.Launcher.exe [OPTIONS]\n\n";
+            usage += "\t--config-file <path>\t\tPath to config file.\n";
+            usage += "\t--algo-file <path>\t\tPath to algorithm file.\n";
+            usage += "\t--results-file <path>\t\tPath to backtest results file.\n";
+            usage += "\t--transactions-file <path>\tPath to transactions file.\n";
+            usage += "\t--log-file <path>\t\tPath to backtest log output.\n";
+            usage += "\t--data-path <path>\t\tPath to data directory.\n";
+            usage += "\t--live-results-path <path>\tPath to live results directory.\n";
+
+            if (Arguments.Length > 1)
+            {
+                if ((Arguments.Length-1) % 2 != 0)
+                {
+                    Console.WriteLine(usage);
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    for (int i = 1; i < Arguments.Length; i+=2)
+                    {
+                        if (Arguments[i] == "--config-file") { Config.ConfigurationFile = Arguments[i+1]; }
+                        else if (Arguments[i] == "--algo-file") { Config.AlgorithmFile = Arguments[i+1]; }
+                        else if (Arguments[i] == "--results-file") { Config.ResultsFile = Arguments[i+1]; }
+                        else if (Arguments[i] == "--transactions-file") { Config.TransactionsFile = Arguments[i+1]; }
+                        else if (Arguments[i] == "--log-file") { Config.LogFile = Arguments[i+1]; }
+                        else if (Arguments[i] == "--data-path") { Config.DataPath = Arguments[i+1]; }
+                        else if (Arguments[i] == "--live-results-path") { Config.LiveResultsPath = Arguments[i+1]; }
+                        else { Console.WriteLine("\nArgument " + Arguments[i] + " is invalid\n\n" + usage); Environment.Exit(0); }
+                    }
+                }
+            }
+        }
 
         private static readonly Lazy<JObject> Settings = new Lazy<JObject>(() =>
         {
             // initialize settings inside a lazy for free thread-safe, one-time initialization
-            if (!File.Exists(ConfigurationFileName))
+            if (!File.Exists(ConfigurationFile))
             {
                 return new JObject
                 {
                     {"algorithm-type-name", "BasicTemplateAlgorithm"},
                     {"live-mode", false},
-                    {"data-folder", "../../../Data/"},
+                    {"data-folder", AppDomain.CurrentDomain.BaseDirectory + "../../../Data/"},
                     {"messaging-handler", "QuantConnect.Messaging.Messaging"},
                     {"queue-handler", "QuantConnect.Queues.Queues"},
                     {"api-handler", "QuantConnect.Api.Api"},
@@ -53,8 +107,82 @@ namespace QuantConnect.Configuration
                 };
             }
 
-            return JObject.Parse(File.ReadAllText(ConfigurationFileName));
+            return JObject.Parse(File.ReadAllText(ConfigurationFile));
         });
+
+        /// <summary>
+        /// Gets the user-defined log file if one is specified.
+        /// </summary>
+        public static string LogFile { get; set; }
+
+        /// <summary>
+        /// Gets the user-defined backtest results file if one is specified.
+        /// </summary>
+        public static string ResultsFile { get; set; }
+
+        /// <summary>
+        /// Gets the user-defined live results file if one is specified.
+        /// </summary>
+        public static string LiveResultsPath { get; set; }
+
+        /// <summary>
+        /// Gets the user-defined data path if one is specified.
+        /// </summary>
+        private static string UserDataPath = "";
+
+        public static string DataPath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(UserDataPath))
+                {
+                    if (Config.Get("data-folder")[0] != '/')
+                        return AppDomain.CurrentDomain.BaseDirectory + Config.Get("data-folder");
+
+                    return Config.Get("data-folder");
+                }
+
+                return UserDataPath;
+
+            }
+            set { UserDataPath = value; }
+        }
+
+        /// <summary>
+        /// Gets the user-defined algorithm file if one is specified.
+        /// </summary>
+        private static string UserAlgorithmFile = "";
+
+        public static string AlgorithmFile
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(UserAlgorithmFile))
+                    return Config.Get("algorithm-location", "QuantConnect.Algorithm.CSharp.dll");
+
+                return UserAlgorithmFile;
+
+            }
+            set { UserAlgorithmFile = value; }
+        }
+
+        /// <summary>
+        /// Gets the user-defined transactions file if one is specified.
+        /// </summary>
+        private static string UserTransactionsFileName = "";
+
+        public static string TransactionsFile
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(UserTransactionsFileName))
+                    return Config.Get("transaction-log");
+
+                return UserTransactionsFileName;
+
+            }
+            set { UserTransactionsFileName = value; }
+        }
 
         /// <summary>
         /// Gets the currently selected environment. If sub-environments are defined,
@@ -81,7 +209,7 @@ namespace QuantConnect.Configuration
             }
             return string.Join(".", environments);
         }
-        
+
         /// <summary>
         /// Get the matching config setting from the file searching for this key.
         /// </summary>
